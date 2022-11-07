@@ -1,0 +1,28 @@
+trigger:
+  - main
+
+pr: none
+
+pool:
+  vmImage: windows-latest
+
+stages:
+  - stage: buildAndTest
+    displayName: Build & Test
+    jobs:
+      - job:
+        displayName: Build Umbraco
+        steps:
+          - task: DotNetCoreCLI@2
+            displayName: 'dotnet build'
+            inputs:
+              command: 'build'
+              projects: 'UmbracoProject/UmbracoProject.csproj'
+      - job:
+        displayName: Unit Test
+        steps:
+          - task: DotNetCoreCLI@2
+            displayName: 'dotnet test'
+            inputs:
+              command: 'test'
+              projects: '**/*.Tests.csproj'
