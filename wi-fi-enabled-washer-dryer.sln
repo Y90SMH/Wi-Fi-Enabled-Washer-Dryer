@@ -1,0 +1,27 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UmbracoProject", "UmbracoProject\UmbracoProject.csproj", "{FEEA826A-E9E9-438A-81FF-36BD8B5D8510}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "tests", "{DC3CF0FE-6DE3-4835-B581-59E7F7B0E9E9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UmbracoProject.Tests", "UmbracoProject.Tests\UmbracoProject.Tests.csproj", "{55A687C7-1A48-4E52-BFE4-CA74D8370851}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FEEA826A-E9E9-438A-81FF-36BD8B5D8510}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FEEA826A-E9E9-438A-81FF-36BD8B5D8510}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FEEA826A-E9E9-438A-81FF-36BD8B5D8510}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FEEA826A-E9E9-438A-81FF-36BD8B5D8510}.Release|Any CPU.Build.0 = Release|Any CPU
+		{55A687C7-1A48-4E52-BFE4-CA74D8370851}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{55A687C7-1A48-4E52-BFE4-CA74D8370851}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{55A687C7-1A48-4E52-BFE4-CA74D8370851}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{55A687C7-1A48-4E52-BFE4-CA74D8370851}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{55A687C7-1A48-4E52-BFE4-CA74D8370851} = {DC3CF0FE-6DE3-4835-B581-59E7F7B0E9E9}
+	EndGlobalSection
+EndGlobal

@@ -27,3 +27,8 @@
 
 # Rider
 .idea
+*.DotSettings.user
+
+# C#
+**/bin/
+**/obj/
