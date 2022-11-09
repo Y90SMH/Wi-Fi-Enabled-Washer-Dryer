@@ -66,3 +66,28 @@ stages:
             inputs:
               targetPath: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
               artifactName: umbraco-build
+
+  - stage: deploy
+    displayName: Blue/Green Deploy
+    jobs:
+      - job:
+        displayName: deploy/verify/swap slots
+        steps:
+          - task: DownloadPipelineArtifact@2
+            displayName: 'download build artifact'
+            inputs:
+              artifactName: umbraco-build
+              downloadPath: '$(Build.ArtifactStagingDirectory)/deploy'
+              downloadType: 'single'
+              source: current
+          - task: AzureRmWebAppDeployment@4
+            displayName: 'deploy artifact to staging slot'
+            inputs:
+              appType: webApp
+              azureSubscription: 'BrightHR'
+              ConnectionType: 'AzureRM'
+              deployToSlotOrASE: true
+              package: '$(Build.ArtifactStagingDirectory)/deploy/*.zip'
+              resourceGroupName: 'Meetup'
+              slotName: 'blue'
+              webAppName: 'umbmeetup'
