@@ -29,7 +29,7 @@ stages:
             inputs:
               searchFolder: $(Agent.TempDirectory)
               testResultsFiles: '**/*.trx'
-              testRunner: NUnit
+              testRunner: VSTest
           - task: reportgenerator@5
             displayName: 'merge code coverage reports'
             inputs:
