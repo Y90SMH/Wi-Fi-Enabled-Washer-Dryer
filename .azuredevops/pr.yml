@@ -23,5 +23,24 @@ stages:
           - task: DotNetCoreCLI@2
             displayName: 'dotnet test'
             inputs:
+              arguments: '--collect:"XPlat Code Coverage" --logger trx'
               command: 'test'
               projects: '**/*.Tests.csproj'
+          - task: PublishTestResults@2
+            displayName: 'publish test results'
+            inputs:
+              searchFolder: $(Agent.TempDirectory)
+              testResultsFiles: '**/*.trx'
+              testRunner: NUnit
+          - task: reportgenerator@5
+            displayName: 'merge code coverage reports'
+            inputs:
+              reports: '$(Agent.TempDirectory)/**/coverage.cobertura.xml'
+              reporttypes: 'Cobertura'
+              targetdir: '$(Pipeline.Workspace)/coverlet'
+              verbosity: 'Verbose'
+          - task: PublishCodeCoverageResults@1
+            displayName: 'publish code coverage results'
+            inputs:
+              codeCoverageTool: Cobertura
+              summaryFileLocation: '$(Pipeline.Workspace)/coverlet/Cobertura.xml'
