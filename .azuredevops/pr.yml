@@ -13,15 +13,56 @@ stages:
     displayName: Build & Test
     jobs:
       - job:
-        displayName: dotnet build && dotnet test
+        displayName: dotnet build/test/publish
         steps:
           - task: DotNetCoreCLI@2
             displayName: 'dotnet build'
             inputs:
               command: 'build'
               projects: 'UmbracoProject/UmbracoProject.csproj'
+
           - task: DotNetCoreCLI@2
             displayName: 'dotnet test'
             inputs:
+              arguments: '--collect:"XPlat Code Coverage" --logger trx'
               command: 'test'
               projects: '**/*.Tests.csproj'
+          - task: PublishTestResults@2
+            displayName: 'publish test results'
+            inputs:
+              searchFolder: $(Agent.TempDirectory)
+              testResultsFiles: '**/*.trx'
+              testRunner: NUnit
+          - task: reportgenerator@5
+            displayName: 'merge code coverage reports'
+            inputs:
+              reports: '$(Agent.TempDirectory)/**/coverage.cobertura.xml'
+              reporttypes: 'Cobertura'
+              targetdir: '$(Pipeline.Workspace)/coverlet'
+              verbosity: 'Verbose'
+          - task: PublishCodeCoverageResults@1
+            displayName: 'publish code coverage results'
+            inputs:
+              codeCoverageTool: Cobertura
+              summaryFileLocation: '$(Pipeline.Workspace)/coverlet/Cobertura.xml'
+
+          - task: DotNetCoreCLI@2
+            displayName: 'dotnet publish'
+            inputs:
+              arguments: '--no-build --output $(Build.ArtifactStagingDirectory)/publish -p:Version=$(Build.BuildNumber)'
+              command: 'publish'
+              projects: 'UmbracoProject/UmbracoProject.csproj'
+              publishWebProjects: false
+              zipAfterPublish: false
+          - task: ArchiveFiles@2
+            displayName: 'create build artifact'
+            inputs:
+              archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+              includeRootFolder: false
+              replaceExistingArchive: true
+              rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/publish/UmbracoProject'
+          - task: PublishPipelineArtifact@1
+            displayName: 'publish build artifact'
+            inputs:
+              targetPath: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+              artifactName: umbraco-build
