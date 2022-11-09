@@ -11,7 +11,7 @@ stages:
     displayName: Build & Test
     jobs:
       - job:
-        displayName: dotnet build && dotnet test
+        displayName: dotnet build/test/publish
         steps:
           - task: DotNetCoreCLI@2
             displayName: 'dotnet build'
