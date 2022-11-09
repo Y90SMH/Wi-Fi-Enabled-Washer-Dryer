@@ -80,8 +80,6 @@ stages:
               downloadPath: '$(Build.ArtifactStagingDirectory)/deploy'
               downloadType: 'single'
               source: current
-          - powershell: 'Expand-Archive -Path ''$(Build.ArtifactStagingDirectory)/deploy/$(Build.BuildId).zip'''
-            displayName: 'PowerShell Script'
           - task: AzureRmWebAppDeployment@4
             displayName: 'deploy artifact to staging slot'
             inputs:
@@ -89,7 +87,8 @@ stages:
               azureSubscription: 'BrightHR'
               ConnectionType: 'AzureRM'
               deployToSlotOrASE: true
-              package: '$(Build.ArtifactStagingDirectory)/deploy/$(Build.BuildId)'
+              enableCustomDeployment: true
+              package: '$(Build.ArtifactStagingDirectory)/deploy/*.zip'
               resourceGroupName: 'Meetup'
               slotName: 'blue'
               webAppName: 'umbmeetup'
