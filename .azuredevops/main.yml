@@ -69,7 +69,7 @@ stages:
     displayName: Blue/Green Deploy
     jobs:
       - job:
-        displayName: deploy/verify
+        displayName: deploy/verify/slot swap
         steps:
           - task: DownloadPipelineArtifact@2
             displayName: 'download build artifact'
@@ -137,3 +137,10 @@ stages:
                 {
                     if ($Response -ne $null) { $Response.Close(); }
                 }
+          - task: AzureAppServiceManage@0
+            displayName: 'swap slots: blue->production'
+            inputs:
+              azureSubscription: 'BrightHR'
+              resourceGroupName: 'Meetup'
+              sourceSlot: blue
+              webAppName: 'umbmeetup'
