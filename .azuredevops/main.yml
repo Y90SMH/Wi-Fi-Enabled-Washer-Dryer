@@ -18,6 +18,7 @@ stages:
             inputs:
               command: 'build'
               projects: 'UmbracoProject/UmbracoProject.csproj'
+
           - task: DotNetCoreCLI@2
             displayName: 'dotnet test'
             inputs:
@@ -42,3 +43,51 @@ stages:
             inputs:
               codeCoverageTool: Cobertura
               summaryFileLocation: '$(Pipeline.Workspace)/coverlet/Cobertura.xml'
+
+          - task: DotNetCoreCLI@2
+            displayName: 'dotnet publish'
+            inputs:
+              arguments: '--no-build --output $(Build.ArtifactStagingDirectory)/publish -p:Version=$(Build.BuildNumber)'
+              command: 'publish'
+              projects: 'UmbracoProject/UmbracoProject.csproj'
+              publishWebProjects: false
+              zipAfterPublish: false
+          - task: ArchiveFiles@2
+            displayName: 'create build artifact'
+            inputs:
+              archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+              includeRootFolder: false
+              replaceExistingArchive: true
+              rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/publish/UmbracoProject'
+          - task: PublishPipelineArtifact@1
+            displayName: 'publish build artifact'
+            inputs:
+              targetPath: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+              artifactName: umbraco-build
+
+  - stage: deploy
+    displayName: Blue/Green Deploy
+    jobs:
+      - job:
+        displayName: deploy/swap slots
+        steps:
+          - task: DownloadPipelineArtifact@2
+            displayName: 'download build artifact'
+            inputs:
+              artifactName: umbraco-build
+              downloadPath: '$(Build.ArtifactStagingDirectory)/deploy'
+              downloadType: 'single'
+              source: current
+          - task: AzureRmWebAppDeployment@4
+            displayName: 'deploy artifact to blue slot'
+            inputs:
+              AppSettings: '-Umbraco:CMS:Examine:LuceneDirectoryFactory SyncedTempFileSystemDirectoryFactory -Umbraco:CMS:Global:MainDomLock FileSystemMainDomLock -Umbraco:CMS:Hosting:LocalTempStorageLocation EnvironmentTemp'
+              appType: webApp
+              azureSubscription: 'BrightHR'
+              ConnectionType: 'AzureRM'
+              deployToSlotOrASE: true
+              enableCustomDeployment: true
+              package: '$(Build.ArtifactStagingDirectory)/deploy/*.zip'
+              resourceGroupName: 'Meetup'
+              slotName: blue
+              webAppName: 'umbmeetup'
