@@ -69,7 +69,7 @@ stages:
     displayName: Blue/Green Deploy
     jobs:
       - job:
-        displayName: deploy/swap slots
+        displayName: deploy/verify
         steps:
           - task: DownloadPipelineArtifact@2
             displayName: 'download build artifact'
@@ -91,3 +91,49 @@ stages:
               resourceGroupName: 'Meetup'
               slotName: blue
               webAppName: 'umbmeetup'
+          - task: PowerShell@2
+            displayName: health checks
+            inputs:
+              targetType: 'inline'
+              failOnStderr: true
+              script: |
+                [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
+                try {
+                    $Retries = 2
+                    $RetryDelaySeconds = 10
+                    $Success = $false
+                    $RetryCount = 0
+                    $Url = "https://umbmeetup-blue.azurewebsites.net"
+                    while (-not $Success) {
+                        try {
+                            $Request = [System.Net.WebRequest]::Create($Url)
+                            $Request.Timeout = 30000
+                            Write-Host ">>>>> GET $Url"
+                            $Response = $Request.GetResponse()
+                            $StatusCode = [int]$Response.StatusCode
+                            if ($StatusCode -ne 200) {
+                                throw ">>>>> Response - $StatusCode"
+                            }
+                            Write-Host ">>>>> Response - $StatusCode OK"
+                            $Success = $true
+                        }
+                        catch {
+                            Write-Warning "$_"
+                            if ($RetryCount -ge $Retries) {
+                                throw ">>>>> Request failed maximum number of retries ($RetryCount)"
+                            } else {
+                                $RetryCount++
+                                Write-Warning ">>>>> Retry attempt #($RetryCount) in $RetryDelaySeconds seconds"
+                                Start-Sleep $RetryDelaySeconds
+                            }
+                        }
+                    }
+                }
+                catch {
+                    Write-Error "$_"
+                    [System.Environment]::Exit(1)
+                }
+                finally
+                {
+                    if ($Response -ne $null) { $Response.Close(); }
+                }
