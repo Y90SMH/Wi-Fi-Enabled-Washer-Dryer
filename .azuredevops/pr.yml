@@ -80,31 +80,10 @@ stages:
               downloadPath: '$(Build.ArtifactStagingDirectory)/deploy'
               downloadType: 'single'
               source: current
-          - task: AzureAppServiceSettings@1
-            displayName: 'appSettings for blue slot'
-            inputs:
-              azureSubscription: 'BrightHR'
-              appName: 'umbmeetup'
-              resourceGroupName: 'Meetup'
-              slotName: blue
-              appSettings: |
-                [
-                  {
-                    "name": "Umbraco:CMS:Examine:LuceneDirectoryFactory",
-                    "Value": "SyncedTempFileSystemDirectoryFactory"
-                  },
-                  {
-                    "name": "Umbraco:CMS:Global:MainDomLock",
-                    "Value": "FileSystemMainDomLock"
-                  },
-                  {
-                    "name": "Umbraco:CMS:Hosting:LocalTempStorageLocation",
-                    "Value": "EnvironmentTemp"
-                  }
-                ]
           - task: AzureRmWebAppDeployment@4
             displayName: 'deploy artifact to blue slot'
             inputs:
+              AppSettings: '-Umbraco:CMS:Examine:LuceneDirectoryFactory SyncedTempFileSystemDirectoryFactory -Umbraco:CMS:Global:MainDomLock FileSystemMainDomLock -Umbraco:CMS:Hosting:LocalTempStorageLocation EnvironmentTemp'
               appType: webApp
               azureSubscription: 'BrightHR'
               ConnectionType: 'AzureRM'
