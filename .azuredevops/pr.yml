@@ -5,6 +5,9 @@ pr:
       include:
           - main
 
+variables:
+  SLACK_CHANNEL: 'meetup-releases'
+
 pool:
   vmImage: windows-latest
 
@@ -138,3 +141,78 @@ stages:
                 {
                     if ($Response -ne $null) { $Response.Close(); }
                 }
+          - script: |
+              curl -L -X POST 'https://slack.com/api/chat.postMessage' \
+              -H 'Authorization: Bearer $(SLACK_TOKEN)' \
+              -H 'Content-Type: application/json' \
+              --data-raw '{
+                "channel": "$(SLACK_CHANNEL)",
+                "username": "Meetup",
+                "icon_emoji": ":technologist:",
+                "attachments": [
+                  {
+                    "color": "#2EB67D",
+                    "blocks": [
+                      {
+                        "type": "section",
+                        "text": {
+                          "type": "mrkdwn",
+                          "text": "*Wi-Fi-Enabled-Washer-Dryer*\nPull Request"
+                        }
+                      },
+                      {
+                        "type": "context",
+                        "elements": [
+                          {
+                            "type": "mrkdwn",
+                            "text": "Deployed <https://github.com/$(Build.Repository.Name)/pull/$(System.PullRequest.PullRequestNumber)|#$(System.PullRequest.PullRequestNumber)>"
+                          },
+                          {
+                            "type": "mrkdwn",
+                            "text": "https://umbmeetupstaging.azurewebsites.net"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }'
+            displayName: Post success to Slack
+          - script: |
+              curl -L -X POST 'https://slack.com/api/chat.postMessage' \
+              -H 'Authorization: Bearer $(SLACK_TOKEN)' \
+              -H 'Content-Type: application/json' \
+              --data-raw '{
+                "channel": "$(SLACK_CHANNEL)",
+                "username": "Azure DevOps",
+                "icon_emoji": ":facepalm:",
+                "attachments": [
+                  {
+                    "color": "#E01E5A",
+                    "blocks": [
+                      {
+                        "type": "section",
+                        "text": {
+                          "type": "mrkdwn",
+                          "text": "*Wi-Fi-Enabled-Washer-Dryer*\Pull Request"
+                        }
+                      },
+                      {
+                        "type": "context",
+                        "elements": [
+                          {
+                            "type": "mrkdwn",
+                            "text": "Failed to deploy <https://github.com/$(Build.Repository.Name)/pull/$(System.PullRequest.PullRequestNumber)|#$(System.PullRequest.PullRequestNumber)>"
+                          },
+                          {
+                            "type": "mrkdwn",
+                            "text": "<https://dev.azure.com/DevSeanOps/Wi-Fi%20Enabled%20Washer%20Dryer/_build/results?buildId=$(Build.BuildId)|View logs>"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }'
+            displayName: Post failure to Slack
+            condition: failed()
