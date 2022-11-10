@@ -8,7 +8,7 @@ variables:
   SLACK_CHANNEL: 'meetup-releases'
 
 pool:
-  vmImage: windows-latest
+  vmImage: ubuntu-latest
 
 stages:
   - stage: buildAndTest
