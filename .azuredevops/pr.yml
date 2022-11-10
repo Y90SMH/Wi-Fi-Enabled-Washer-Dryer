@@ -32,7 +32,7 @@ stages:
             inputs:
               searchFolder: $(Agent.TempDirectory)
               testResultsFiles: '**/*.trx'
-              testRunner: NUnit
+              testRunner: VSTest
           - task: reportgenerator@5
             displayName: 'merge code coverage reports'
             inputs:
@@ -66,3 +66,75 @@ stages:
             inputs:
               targetPath: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
               artifactName: umbraco-build
+
+  - stage: deploy
+    displayName: Direct Deploy
+    jobs:
+      - job:
+        displayName: deploy/verify
+        steps:
+          - task: DownloadPipelineArtifact@2
+            displayName: 'download build artifact'
+            inputs:
+              artifactName: umbraco-build
+              downloadPath: '$(Build.ArtifactStagingDirectory)/deploy'
+              downloadType: 'single'
+              source: current
+          - task: AzureRmWebAppDeployment@4
+            displayName: 'deploy artifact'
+            inputs:
+              AppSettings: '-Umbraco:CMS:Examine:LuceneDirectoryFactory SyncedTempFileSystemDirectoryFactory -Umbraco:CMS:Global:MainDomLock FileSystemMainDomLock -Umbraco:CMS:Hosting:LocalTempStorageLocation EnvironmentTemp'
+              appType: webApp
+              azureSubscription: 'BrightHR'
+              ConnectionType: 'AzureRM'
+              deployToSlotOrASE: false
+              enableCustomDeployment: true
+              package: '$(Build.ArtifactStagingDirectory)/deploy/*.zip'
+              resourceGroupName: 'Meetup'
+              webAppName: 'umbmeetupstaging'
+          - task: PowerShell@2
+            displayName: health checks
+            inputs:
+              targetType: 'inline'
+              failOnStderr: true
+              script: |
+                [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
+                try {
+                    $Retries = 2
+                    $RetryDelaySeconds = 10
+                    $Success = $false
+                    $RetryCount = 0
+                    $Url = "https://umbmeetupstaging.azurewebsites.net"
+                    while (-not $Success) {
+                        try {
+                            $Request = [System.Net.WebRequest]::Create($Url)
+                            $Request.Timeout = 30000
+                            Write-Host ">>>>> GET $Url"
+                            $Response = $Request.GetResponse()
+                            $StatusCode = [int]$Response.StatusCode
+                            if ($StatusCode -ne 200) {
+                                throw ">>>>> Response - $StatusCode"
+                            }
+                            Write-Host ">>>>> Response - $StatusCode OK"
+                            $Success = $true
+                        }
+                        catch {
+                            Write-Warning "$_"
+                            if ($RetryCount -ge $Retries) {
+                                throw ">>>>> Request failed maximum number of retries ($RetryCount)"
+                            } else {
+                                $RetryCount++
+                                Write-Warning ">>>>> Retry attempt #($RetryCount) in $RetryDelaySeconds seconds"
+                                Start-Sleep $RetryDelaySeconds
+                            }
+                        }
+                    }
+                }
+                catch {
+                    Write-Error "$_"
+                    [System.Environment]::Exit(1)
+                }
+                finally
+                {
+                    if ($Response -ne $null) { $Response.Close(); }
+                }
